@@ -1,0 +1,156 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+//// =============================
+// ロール
+//// =============================
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  label String
+  users User[]
+}
+
+//// =============================
+// ユーザー
+//// =============================
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  nickname       String
+  role           Role      @relation(fields: [roleId], references: [id])
+  roleId         Int
+  profile        Profile?
+  questions      Question[]
+  comments       Comment[]
+  questionLikes  QuestionLike[]
+  commentLikes   CommentLike[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+//// =============================
+// プロフィール
+//// =============================
+model Profile {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @unique
+  fullName      String?
+  phoneNumber   String?
+  bio           String?
+  website       String?
+  avatarUrl     String?
+  location      String?
+  birthday      DateTime?
+  gender        Gender?
+  github        String?
+  twitter       String?
+  linkedin      String?
+  isPublic      Boolean   @default(true)
+  updatedByUser Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+//// =============================
+// チャプター
+//// =============================
+model Chapter {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  questions Question[]
+}
+
+//// =============================
+// 質問カテゴリ
+//// =============================
+model QuestionCategory {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  questions Question[]
+}
+
+//// =============================
+// 質問
+//// =============================
+model Question {
+  id          String             @id @default(uuid())
+  title       String
+  content     String
+  isPrivate   Boolean            @default(false)
+  status      String             @default("open")
+  user        User               @relation(fields: [userId], references: [id])
+  userId      String
+  chapter     Chapter            @relation(fields: [chapterId], references: [id])
+  chapterId   Int
+  category    QuestionCategory   @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  comments    Comment[]
+  likes       QuestionLike[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+//// =============================
+// コメント（スレッド構造）
+//// =============================
+model Comment {
+  id             String    @id @default(uuid())
+  content        String
+  user           User      @relation(fields: [userId], references: [id])
+  userId         String
+  question       Question? @relation(fields: [questionId], references: [id])
+  questionId     String?
+  parentComment  Comment?  @relation("CommentToComment", fields: [parentCommentId], references: [id])
+  parentCommentId String?
+  replies        Comment[] @relation("CommentToComment")
+  likes          CommentLike[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+//// =============================
+// 質問のいいね
+//// =============================
+model QuestionLike {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId String
+
+  @@unique([userId, questionId])
+}
+
+//// =============================
+// コメントのいいね
+//// =============================
+model CommentLike {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  comment    Comment  @relation(fields: [commentId], references: [id])
+  commentId  String
+
+  @@unique([userId, commentId])
+}
