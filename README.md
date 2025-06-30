@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ShiftBridge
 
-## Getting Started
+Next.js × React × Prisma × Supabase で構築する
+**学習コミュニティ型フォーラムアプリケーション**
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 📦 使用技術
+
+- Next.js 14.2.3（App Router 対応の安定版）
+- React 18.2.0
+- Prisma ORM
+- Supabase（Auth + DB + Storage）
+- Tailwind CSS
+- Radix UI
+- Zod（バリデーション）
+
+---
+
+## 🏗️ ディレクトリ構成
+
+```
+src/
+├── app/ # ページと API ルート
+├── \_components/ # UI コンポーネント
+├── \_lib/ # Prisma、Supabase クライアント
+├── \_utils/ # 汎用関数
+├── \_types/ # 型定義
+├── prisma/ # Prisma の設定とマイグレーション
+├── public/ # 静的ファイル
+└── styles/ # グローバル CSS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ⚙️ セットアップ手順
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1️⃣ リポジトリをクローン
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+git clone git@github.com:Kazuya-Sakashita/shiftbridge-app.git
+cd shiftbridge
 
-## Learn More
+npm install
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 3️⃣ 環境変数を設定
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`.env.local` を作成して以下を追加
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 
-## Deploy on Vercel
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4️⃣ Prisma のセットアップ
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+### 5️⃣ 開発サーバーを起動
+
+→ `http://localhost:3000` にアクセス
+
+## 🔐 認証
+
+- Supabase の Auth（メール/パスワード）
+- JWT ベースの認証
+- 認証ガード（middleware）対応
+
+---
+
+## 🗃️ データベース
+
+- Supabase の PostgreSQL
+- Prisma でマイグレーション＆型安全管理
+
+---
+
+## 🚀 機能一覧
+
+- ✅ ユーザー認証（メール/パスワード）
+- ✅ フォーラム投稿（質問・コメント）
+- ✅ 質問へのコメント・いいね
+- ✅ プロフィール編集
+- ✅ ロール管理（学生・卒業生・講師・管理者）
+- ✅ 投稿の非公開設定
+- ✅ Radix UI + Tailwind でモダン UI
+
+---
+
+## 🧑‍💻 コマンド一覧
+
+| コマンド                 | 説明                         |
+| ------------------------ | ---------------------------- |
+| `npm run dev`            | 開発サーバー起動             |
+| `npm run build`          | 本番ビルド                   |
+| `npm run start`          | 本番サーバー起動             |
+| `npx prisma studio`      | DB 管理 GUI（Prisma Studio） |
+| `npx prisma migrate dev` | マイグレーションの作成と適用 |
+| `npm run prisma:seed`    | シードデータ投入（必要なら） |
+
+---
+
+## 🌟 今後のアップデート予定
+
+- 🔸 通知機能（リアルタイム）
+- 🔸 ダッシュボード
+- 🔸 ソーシャルログイン（Google、GitHub）
+- 🔸 ダークモード強化
+
+---
+
+## 👨‍💻 制作者
+
+- [@Kazuya-Sakashita](https://github.com/Kazuya-Sakashita)
+
+---
