@@ -1,7 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
 import { Label } from "@/app/_components/ui/label";
@@ -23,21 +26,50 @@ import {
   GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { register } from "@/app/_lib/auth"; // ここは適切なパスに修正
+import { register as registerUser } from "@/app/_lib/auth";
 
 type Role = {
   id: number;
   name: string;
-  label: string; // ← 追加
+  label: string;
 };
 
+// ===========================
+// 🔐 Zod スキーマ定義
+// ===========================
+const registerSchema = z
+  .object({
+    email: z
+      .string()
+      .email({ message: "有効なメールアドレスを入力してください" }),
+    password: z
+      .string()
+      .min(8, { message: "8文字以上で入力してください" })
+      .regex(/[a-z]/, { message: "小文字を含めてください" })
+      .regex(/[A-Z]/, { message: "大文字を含めてください" })
+      .regex(/[0-9]/, { message: "数字を含めてください" }),
+    confirmPassword: z.string(),
+    nickname: z.string().min(1, "ニックネームは必須です"),
+    roleId: z.number(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "パスワードが一致しません",
+  });
+
+type RegisterFormInputs = z.infer<typeof registerSchema>;
+
 export function RegisterForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [role, setRole] = useState<number | null>(null);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<RegisterFormInputs>({
+    resolver: zodResolver(registerSchema),
+  });
+
   const [roles, setRoles] = useState<Role[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -45,58 +77,25 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Role一覧を取得
+  // ロール一覧取得
   useEffect(() => {
     const fetchRoles = async () => {
       const res = await fetch("/api/role");
       const data = await res.json();
       setRoles(data);
       if (data.length > 0) {
-        setRole(data[0].id); // 初期選択
+        setValue("roleId", data[0].id);
       }
     };
     fetchRoles();
-  }, []);
+  }, [setValue]);
 
-  const validatePassword = (password: string) => {
-    if (password.length < 8) {
-      return "パスワードは8文字以上で入力してください";
-    }
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      return "パスワードは大文字、小文字、数字を含む必要があります";
-    }
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const onSubmit: SubmitHandler<RegisterFormInputs> = async (data) => {
     setIsLoading(true);
+    setError("");
 
     try {
-      if (!email || !password || !confirmPassword || !nickname || !role) {
-        setError("すべての項目を入力してください");
-        return;
-      }
-
-      const passwordError = validatePassword(password);
-      if (passwordError) {
-        setError(passwordError);
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setError("パスワードが一致しません");
-        return;
-      }
-
-      const result = await register({
-        email,
-        password,
-        confirmPassword,
-        nickname,
-        roleId: role,
-      });
+      const result = await registerUser(data);
 
       if (result.success) {
         router.push("/");
@@ -105,14 +104,14 @@ export function RegisterForm() {
       }
     } catch (e) {
       console.error(e);
-      setError("エラーが発生しました");
+      setError("サーバーエラーが発生しました");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <Alert className="border-red-200 bg-red-50">
           <AlertDescription className="text-red-700">{error}</AlertDescription>
@@ -122,18 +121,16 @@ export function RegisterForm() {
       <div className="space-y-4">
         {/* ニックネーム */}
         <div>
-          <Label htmlFor="name">ニックネーム</Label>
+          <Label htmlFor="nickname">ニックネーム</Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <Input
-              id="name"
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              required
-              className="pl-10"
-            />
+            <Input id="nickname" {...register("nickname")} className="pl-10" />
           </div>
+          {errors.nickname && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nickname.message}
+            </p>
+          )}
         </div>
 
         {/* メール */}
@@ -144,12 +141,13 @@ export function RegisterForm() {
             <Input
               id="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              {...register("email")}
               className="pl-10"
             />
           </div>
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
         </div>
 
         {/* ユーザー種別 */}
@@ -158,13 +156,13 @@ export function RegisterForm() {
           <div className="relative">
             <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 z-10" />
             <Select
-              value={role?.toString()}
-              onValueChange={(value) => setRole(Number(value))}
+              onValueChange={(value) => setValue("roleId", Number(value))}
+              defaultValue={watch("roleId")?.toString()}
             >
               <SelectTrigger className="pl-10 bg-white border border-gray-300">
                 <SelectValue placeholder="ユーザー種別を選択" />
               </SelectTrigger>
-              <SelectContent className="bg-white ">
+              <SelectContent className="bg-white">
                 {roles.map((role) => (
                   <SelectItem key={role.id} value={role.id.toString()}>
                     {role.label}
@@ -183,9 +181,7 @@ export function RegisterForm() {
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register("password")}
               className="pl-10 pr-10"
             />
             <Button
@@ -202,6 +198,11 @@ export function RegisterForm() {
               )}
             </Button>
           </div>
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         {/* 確認パスワード */}
@@ -212,9 +213,7 @@ export function RegisterForm() {
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
+              {...register("confirmPassword")}
               className="pl-10 pr-10"
             />
             <Button
@@ -231,6 +230,11 @@ export function RegisterForm() {
               )}
             </Button>
           </div>
+          {errors.confirmPassword && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.confirmPassword.message}
+            </p>
+          )}
         </div>
       </div>
 
