@@ -19,7 +19,7 @@ Next.js × React × Prisma × Supabase で構築する
 
 ## 🏗️ ディレクトリ構成
 
-```
+```bash
 src/
 ├── app/ # ページと API ルート
 ├── \_components/ # UI コンポーネント
@@ -35,7 +35,7 @@ src/
 
 ### 1️⃣ リポジトリをクローン
 
-```
+```bash
 git clone git@github.com:Kazuya-Sakashita/shiftbridge-app.git
 cd shiftbridge
 
@@ -46,7 +46,7 @@ npm install
 
 `.env.local` を作成して以下を追加
 
-```
+```bash
 NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 
@@ -55,7 +55,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 
 ### 4️⃣ Prisma のセットアップ
 
-```
+```bash
 npx prisma generate
 npx prisma migrate dev --name init
 ```

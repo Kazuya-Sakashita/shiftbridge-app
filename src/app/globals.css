@@ -2,15 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+.select-trigger,
+input {
+  background-color: white;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  .select-trigger,
+  input {
+    background-color: #0a0a0a;
   }
 }
 
