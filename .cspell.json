@@ -1,0 +1,15 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": [".gitignore"],
+  "words": [
+    "vercel",
+    "Supabase",
+    "shiftbridge",
+    "Sakashita",
+    "Kazuya",
+    "autoincrement",
+    "pkey",
+    "fkey"
+  ]
+}
